@@ -1,0 +1,134 @@
+dir()
+getwd()
+setwd("E:/Lab. Anuros Neotropicais/Pseudopaludicola/P. sp. e P. mineira - Curvelo e Serra do Cipó/analises R/canto")
+
+mydata<-read.table("acoustic_data_curvelo_nov2018.txt", head=T)
+
+head(mydata)
+str(mydata)
+fix(mydata)
+summary(mydata)
+
+
+plot(mydata$locality, mydata$noteDur, main="note duration")
+plot(mydata$locality, mydata$interNote, main="internote interval")
+plot(mydata$locality, mydata$numbPulse, main="Number of pulses per note")
+plot(mydata$locality, mydata$PulseDur, main="pulse duration")
+plot(mydata$locality, mydata$interpulse, main="interpulse interval")
+plot(mydata$locality, mydata$pulseRate, main="Pulse rate")
+plot(mydata$locality, mydata$note.min, main="Notes per minute")
+plot(mydata$locality, mydata$domPeak, main="Peak of dominant frequency")
+plot(mydata$locality, mydata$temp_air, main="air temperature")
+
+##############################################################
+
+install.packages("coin")
+require("coin")
+
+str(mydata)
+
+#significância noteDur
+
+wilcox_test(noteDur~locality, data = mydata,
+conf.int = F, conf.level = 0.95, distribution = "exact")
+#resultado:  Z = -4.5433, p-value = 3.657e-09
+
+
+#significância interNote
+
+wilcox_test(interNote~locality, data = mydata,
+conf.int = F, conf.level = 0.95, distribution = "exact")
+
+#resultado:  Z = -4.3754, p-value = 1.061e-07
+
+
+#significância PulseDur
+
+wilcox_test(PulseDur~locality, data = mydata,
+conf.int = F, conf.level = 0.95, distribution = "exact")
+
+#resultado:  Z = -1.6807, p-value = 0.09812
+
+
+#significância interpulse
+
+wilcox_test(interpulse~locality, data = mydata,
+conf.int = F, conf.level = 0.95, distribution = "exact")
+
+#resultado:  Z = -4.5101, p-value = 7.314e-09
+
+
+#significância pulseRate
+
+wilcox_test(pulseRate~locality, data = mydata,
+conf.int = F, conf.level = 0.95, distribution = "exact")
+
+#resultado:  Z = 4.5197, p-value = 7.314e-09
+
+
+#significância note.min
+
+wilcox_test(note.min~locality, data = mydata,
+conf.int = F, conf.level = 0.95, distribution = "exact")
+
+#resultado:  Z = 4.5185, p-value = 7.314e-09
+
+
+#significância domPeak
+
+wilcox_test(domPeak~locality, data = mydata,
+conf.int = F, conf.level = 0.95, distribution = "exact")
+
+#resultado:  Z = 4.3567, p-value = 1.39e-07
+
+
+#significância air temperature
+
+wilcox_test(temp_air~locality, data = mydata,
+conf.int = F, conf.level = 0.95, distribution = "exact")
+
+#resultado:  Z = 4.1034, p-value = 1.964e-06
+
+
+
+############################################
+#############################################
+#RandomForest
+
+head(mydata)
+str(mydata)
+require(randomForest)
+fix(mydata)
+
+pseud.rf <- randomForest(locality ~ ., data=mydata, importance=TRUE, 
+proximity=TRUE, ntree=1000)
+
+print(pseud.rf)
+
+require(rfPermute)
+
+proximityPlot(pseud.rf, dim.x = 1, dim.y = 2, legend.loc = "top", 
+circle.size = 8, point.size = 4, circle.border = 3, hull.alpha = 0.2, plot=TRUE)
+
+varImpPlot(pseud.rf, sort=TRUE, n.var=min(30, nrow(pseud.rf$importance)), 
+type=NULL, class=NULL, scale=TRUE, main=deparse(substitute(Variables)))
+
+pseud.rf$predicted # que foi classificado como?
+pseud.rf$dim.x
+
+plot(outlier(pseud.rf), type="h", col=c("red", "blue")[as.numeric(mydata$species)]) # acima de 10 = outliers graves
+
+## Look at variable importance:
+
+round(importance(pseud.rf), 1)
+
+x<-varUsed(pseud.rf, by.tree=FALSE, count=TRUE)
+
+packageDescription("rfPermute")$Version 
+
+MDSplot(pseud.rf, mydata$species, k=2, palette=NULL, pch=20)
+importance(pseud.rf, type=1)
+
+impHeatmap(pseud.rf, xlab = "Transmission", ylab = "Predictor")
+
+
